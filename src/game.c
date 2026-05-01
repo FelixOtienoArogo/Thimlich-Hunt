@@ -138,7 +138,7 @@ static void render_map(void){
     /**
      * Draw a single ray showing where the player is looking
      */
-    raycast_draw_single_ray(&player);
+    raycast_draw_rays(&player);
 
 
     /*Debug text */

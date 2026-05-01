@@ -4,12 +4,12 @@
 #include "player.h"
 
 /**
- * raycast_draw_single_ray - Draws one ray from the player
+ * raycast_draw_rays - Draws multiple rays (field of view)
  * @player: Pointer to the player structure
  * 
  * Return: Nothing
  * 
  */
-void raycast_draw_single_ray(Player *player);
+void raycast_draw_rays(Player *player);
 
 #endif
