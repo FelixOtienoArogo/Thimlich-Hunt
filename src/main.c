@@ -6,6 +6,7 @@
  */
 
 #include "raylib.h"
+#include "game.h"
 
 /**
  * main - Entry point of the application
@@ -27,21 +28,9 @@ int main(void)
 	 * Main game loop
 	 * Runs continuously until the user closes the window
 	 */
-	while (!WindowShouldClose())
-	{
-		/* Begin drawing frame */
-		BeginDrawing();
+	/* Run the game logic */
+    game_run();
 
-		/* Clear the background to black */
-		ClearBackground(BLACK);
-
-		/* Render basic text to confirm rendering works */
-		DrawText("Thimlich Hunt", 40, 40, 32, RAYWHITE);
-		DrawText("Raylib setup is working.", 40, 90, 20, LIGHTGRAY);
-
-		/* End drawing frame */
-		EndDrawing();
-	}
 
 	/* Close the window and clean up resources */
 	CloseWindow();
