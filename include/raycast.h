@@ -12,4 +12,13 @@
  */
 void raycast_draw_rays(Player *player);
 
+
+/**
+ * raycast_render_3d - Renders pseudo-3D wall slices from raycasts
+ * @player: Pointer to player structure
+ * 
+ * Return: Nothing
+ */
+void raycast_render_3d(Player *player);
+
 #endif

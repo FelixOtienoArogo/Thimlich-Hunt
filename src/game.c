@@ -10,21 +10,34 @@
  #include "raycast.h"
  #include <math.h>
 
-#define MAP_RENDER_TILE 50
-#define MAP_OFFSET_X 390
-#define MAP_OFFSET_Y 100
+#define MAP_RENDER_TILE 16
+#define MAP_OFFSET_X 20
+#define MAP_OFFSET_Y 520
 
  /* Global (module-local) player instance */
 static Player player;
 
+/* Tracks whether the minimap is visible */
+static int show_minimap = 1;
+
  /**
   * process_input - Handles player and system input
+  * 
+  * M enables the minimap.
+  * N disables the minimap
   * 
   * Return: Nothing
   * 
   */
  static void process_input(void){
-    /* Input logic will be added here*/
+    /*Enables minimap*/
+    if(IsKeyPressed(KEY_M)){
+        show_minimap = 1;
+    }
+    /*Disable minimap*/
+    if(IsKeyPressed(KEY_N)){
+        show_minimap = 0;
+    }
  }
 
  /**
@@ -123,24 +136,30 @@ static void render_map(void){
     /*Clear previous frame*/
     ClearBackground(BLACK);
 
+    /* Render pseudo-3D wall view */
+    raycast_render_3d(&player);
+
     /* Title Area*/
     DrawText("Thimlich Hunt", 40, 25, 32, RAYWHITE);
 
-    /* Draw the map first */
-    render_map();
+    /* Render minimap only when enalbed*/
+    if(show_minimap){
+        /* Draw the map first */
+        render_map();
 
-     /**
-     * Draw player as a simple circle(Awaiting 3D rendering)
-     * 
-     */
-    DrawCircle(player_screen_x, player_screen_y, 7, RED);
+        /**
+        * Draw player as a simple circle(Awaiting 3D rendering)
+        * 
+        */
+        DrawCircle(player_screen_x, player_screen_y, 7, RED);
 
-    /**
-     * Draw a single ray showing where the player is looking
-     */
-    raycast_draw_rays(&player);
+        /**
+        * Draw  rays showing where the player is looking
+        */
+        raycast_draw_rays(&player);
 
-
+    }
+    
     /*Debug text */
     DrawText("Use arrow Keys to move", 40, 120, 20, LIGHTGRAY);
     DrawText(TextFormat("Player X: %.2f Y: %.2f", player.x, player.y), 40, 150, 20, LIGHTGRAY);
