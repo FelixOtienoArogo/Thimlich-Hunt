@@ -7,6 +7,7 @@
 
 #include "raylib.h"
 #include "game.h"
+#include "config.h"
 
 /**
  * main - Entry point of the application
@@ -15,11 +16,8 @@
  */
 int main(void)
 {
-	const int screen_width = 1280;
-	const int screen_height = 720;
-
 	/* Initialize window */
-	InitWindow(screen_width, screen_height, "Thimlich Hunt");
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Thimlich Hunt");
 
 	/* Set target frames per second */
 	SetTargetFPS(60);

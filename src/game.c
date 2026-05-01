@@ -9,10 +9,7 @@
  #include "map.h"
  #include "raycast.h"
  #include <math.h>
-
-#define MAP_RENDER_TILE 16
-#define MAP_OFFSET_X 20
-#define MAP_OFFSET_Y 520
+ #include "config.h"
 
  /* Global (module-local) player instance */
 static Player player;

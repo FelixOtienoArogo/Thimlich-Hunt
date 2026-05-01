@@ -210,8 +210,18 @@ void raycast_render_3d(Player *player){
         /*Draw sky*/
         DrawRectangle(slice_x, 0, slice_width, wall_top, DARKBLUE);
 
-        /* Draw wall slice*/
-        DrawRectangle(slice_x, wall_top, slice_width, wall_bottom - wall_top, LIGHTGRAY);
+        /**
+         * Shade walls based on distance.
+         * Close walls appear brighter, far walls appear darker
+         */
+        unsigned char shade;
+
+        shade = (unsigned char)(255.0f - (corrected_distance * 0.7f));
+
+        if(shade < 60){
+            shade = 60;
+        }
+        DrawRectangle(slice_x, wall_top, slice_width, wall_bottom - wall_top, (Color){shade, shade, shade, 255});
 
         /*Draw floor*/
         DrawRectangle(slice_x, wall_bottom, slice_width, SCREEN_HEIGHT - wall_bottom, DARKGREEN);
