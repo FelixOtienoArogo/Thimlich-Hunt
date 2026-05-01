@@ -7,6 +7,7 @@
  #include "game.h"
  #include "player.h"
  #include "map.h"
+ #include "raycast.h"
  #include <math.h>
 
 #define MAP_RENDER_TILE 50
@@ -135,15 +136,9 @@ static void render_map(void){
     DrawCircle(player_screen_x, player_screen_y, 7, RED);
 
     /**
-     * Draw ray from player outwards in direction of player's angle
+     * Draw a single ray showing where the player is looking
      */
-    DrawLine(
-	player_screen_x,
-	player_screen_y,
-	player_screen_x + (int)(cosf(player.angle * DEG2RAD) * 30.0f),
-	player_screen_y + (int)(sinf(player.angle * DEG2RAD) * 30.0f),
-	YELLOW
-);
+    raycast_draw_single_ray(&player);
 
 
     /*Debug text */
