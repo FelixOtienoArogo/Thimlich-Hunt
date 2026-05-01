@@ -61,6 +61,105 @@ The level design is inspired by real-world defensive structures:
 
 ---
 
+## ⚙️ Dependencies
+
+This project requires the following tools and libraries:
+
+- GCC (C compiler)
+- Make
+- Raylib
+- pkg-config (recommended)
+
+---
+
+## 🧱 Installation (Ubuntu / Debian)
+
+### 1. Install build tools
+
+```bash
+sudo apt update
+sudo apt install -y build-essential git make pkg-config
+```
+
+---
+
+### 2. Install Raylib
+
+#### Option A: Using package manager (recommended)
+
+```bash
+sudo apt install -y libraylib-dev
+```
+
+---
+
+#### Option B: Build from source (if apt fails)
+
+```bash
+git clone https://github.com/raysan5/raylib.git
+cd raylib/src
+make PLATFORM=PLATFORM_DESKTOP
+sudo make install
+sudo ldconfig
+```
+
+---
+
+## 🧪 Verify Installation
+
+Create a test file:
+
+```bash
+nano test.c
+```
+
+Paste:
+
+```c
+#include "raylib.h"
+
+int main(void)
+{
+    InitWindow(800, 450, "Raylib Test");
+
+    while (!WindowShouldClose())
+    {
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        DrawText("Raylib is working!", 190, 200, 20, LIGHTGRAY);
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+```
+
+Compile:
+
+```bash
+gcc test.c -o test $(pkg-config --cflags --libs raylib)
+```
+
+Run:
+
+```bash
+./test
+```
+
+If a window opens, Raylib is correctly installed.
+
+---
+
+## 🚀 Build & Run
+
+```bash
+make build
+make run
+```
+
+---
+
 ## 📦 Installation
 
     git clone https://github.com/FelixOtienoArogo/Thimlich-Hunt.git
