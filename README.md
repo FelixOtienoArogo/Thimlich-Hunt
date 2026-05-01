@@ -12,6 +12,13 @@ Built in C using **Raylib**, the project demonstrates real-time rendering, colli
 You play as a lone defender tasked with reclaiming a breached fortress—navigating narrow corridors, eliminating invaders, and securing inner enclosures.
 
 ---
+## 🏛️ Lore
+
+Thimlich Hunt takes place within a fortified stone stronghold that has been breached by hostile invaders.
+
+You are the last defender, navigating narrow corridors and layered enclosures to reclaim the fortress. Using your knowledge of the maze-like structure, you must eliminate enemies and secure the inner stronghold before it falls.
+
+---
 
 ## 🎮 Features
 
