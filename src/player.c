@@ -91,7 +91,7 @@
     /* Turn left*/
     if(IsKeyDown(KEY_LEFT)){
         player->angle -= player->rotation_speed;
-        printf("Left key press\n %.02f", player->angle);
+        //printf("Left key press\n %.02f", player->angle);
     }
 
     /* Turn right */

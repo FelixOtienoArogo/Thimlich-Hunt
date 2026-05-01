@@ -10,9 +10,13 @@
  #include "raycast.h"
  #include <math.h>
  #include "config.h"
+ #include "enemy.h"
+ #include "stdio.h"
 
  /* Global (module-local) player instance */
 static Player player;
+/* Global (module-local) enemy instance */
+static Enemy enemy;
 
 /* Tracks whether the minimap is visible */
 static int show_minimap = 1;
@@ -150,6 +154,9 @@ static void render_map(void){
         */
         DrawCircle(player_screen_x, player_screen_y, 7, RED);
 
+        /* Draw enemy on minimap */
+        enemy_draw_minimap(&enemy);
+
         /**
         * Draw  rays showing where the player is looking
         */
@@ -173,6 +180,9 @@ static void render_map(void){
  void game_run(void){
     /* Initialize player before starting the loop */
     player_init(&player);
+
+    /* Initalize player before starting the loop*/
+    enemy_init(&enemy, 2, 1);
 
     while(!WindowShouldClose()){
         process_input();
