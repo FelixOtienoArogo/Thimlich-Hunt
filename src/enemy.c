@@ -6,6 +6,8 @@
 #include "enemy.h"
 #include "map.h"
 #include "config.h"
+#include <math.h>
+#include "player.h"
 
 
 /**
@@ -53,4 +55,89 @@ void enemy_draw_minimap(Enemy *enemy){
 
     /* Draw enemy as a purple dot on minimap*/
     DrawCircle(screen_x, screen_y, 6, PURPLE);
+}
+
+
+/**
+ * enemy_detect_player - Checks if enemy detects player
+ * @enemy: Pointer to enemy
+ * @player: Pointer to plaher
+ * 
+ * Uses distance between player and enemy.
+ * 
+ * Return: 1 if detected, 0 otherwise
+ */
+int enemy_detect_player(Enemy *enemy, Player *player){
+    float dx;
+    float dy;
+    float distance;
+
+    if(!enemy->active){
+        return(0);
+    }
+
+    /* Distacne formula*/
+    dx = player->x - enemy->x;
+    dy = player->y - enemy->y;
+
+    distance = sqrtf((dx * dx) + (dy * dy));
+
+    /* Detection radius (adjust later)*/
+    if (distance < 120.0f){
+        return(1);
+    }
+    return(0);
+}
+
+/**
+ * enemy_update - Update enemy behavior
+ * @enemy: Pointer to enemy
+ * #player: Pointer to player
+ * 
+ * 
+ * This is the first enemy AI behavior:
+ * -IF the enmy is inactive, do nothing
+ * -If the enemy is within detection range, move toward the player
+ * _Movement is normalized so diagonal movement is not faster.
+ * 
+ * Return: Nothing
+ */
+void enemy_update(Enemy *enemy, Player *player){
+    float dx;
+    float dy;
+    float distance;
+    float enemy_speed;
+
+    /*Ignore enemies that are no longer active*/
+    if(!enemy->active){
+        return;
+    }
+    
+    /*Only chase if the player is detected*/
+    if(!enemy_detect_player(enemy, player)){
+        return;
+    }
+
+    /* Calculate direction from enemy to player*/
+    dx = player->x - enemy->x;
+    dy = player->y - enemy->y;
+
+    /* Calculate distance between enemy and player*/
+    distance = sqrtf((dx * dx) + (dy * dy));
+
+    /* Avoid division by zero if enemy is exactly on player*/
+    if (distance <= 1.0f){
+        return;
+    }
+
+    /* Enemy movement speed per frame*/
+    enemy_speed = 1.0f;
+
+    /**
+     * Normalize direction:
+     * dx/ distance and dy/distance produce a unit direction vector
+     * Multiplying by speed gives controlled mvement towards the player
+     */
+    enemy->x += (dx / distance) * enemy_speed;
+    enemy->y += (dy / distance) * enemy_speed;
 }

@@ -50,6 +50,9 @@ static int show_minimap = 1;
     /* AI and combat logic will be added here*/
     /* Update player (movement + colision)*/
     player_update(&player);
+
+    /*Update enemy behavior*/
+    enemy_update(&enemy, &player);
  }
 
 /**

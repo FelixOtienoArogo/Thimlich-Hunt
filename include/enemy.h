@@ -1,6 +1,8 @@
 #ifndef ENEMY_H
 #define ENEMY_h
 
+#include "player.h"
+
 /**
  * struct Enemy - stores enemy state
  * @x: Enemy x-position in world coordinates
@@ -31,5 +33,25 @@ void enemy_init(Enemy *enemy, int tile_x, int tile_y);
  * Return: Nothing
  */
 void enemy_draw_minimap(Enemy *enemy);
+
+/**
+ * enemy_detect_player - Checks if enemy detects player
+ * @enemy: Pointer to enemy
+ * @player: Pointer to player
+ * 
+ * Return: 1 if player detected, 0 otherwise
+ */
+int enemy_detect_player(Enemy *enemy, Player *player);
+
+/**
+ * enemy_update - Updates enemy behavior
+ * @enemy: Pointer to enemy
+ * @player: Pointer to player
+ * 
+ * If the player is close enough, the enemy moves toward the player
+ * 
+ * Return: Nothing
+ */
+void enemy_update(Enemy *enemy, Player *player);
 
 #endif
