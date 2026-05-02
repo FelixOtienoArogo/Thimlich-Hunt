@@ -21,6 +21,12 @@ static Enemy enemy;
 /* Tracks whether the minimap is visible */
 static int show_minimap = 1;
 
+/* Controls the red screen flash shown when player takes damage */
+static int damage_flash_timer = 0;
+
+/* Prevents player from taking damage every frame*/
+static int damage_cooldown_timer = 0;
+
 /**
  * g_zbuffer - Stores wall distacne for each screen column
  * 
@@ -57,16 +63,32 @@ float g_zbuffer[NUM_RAYS];
   * Return: Nothing
   */
  static void update_game(void){
-    /* AI and combat logic will be added here*/
+    /* Stop updating gameplay when player health reaches zero */
+    if(player.health <= 0){
+        return;
+    }
+
     /* Update player (movement + colision)*/
     player_update(&player);
 
     /*Update enemy behavior*/
     enemy_update(&enemy, &player);
 
-    /* Apply damage when enemy touches player*/
-    if(enemy_check_player_contact(&enemy, &player) && player.health > 0){
+    /* Apply damage when enemy touches player and the damage cooldown has expire. The flash timer gives clear visual feedback that damage happene*/
+    if(enemy_check_player_contact(&enemy, &player) && player.health > 0 && damage_cooldown_timer == 0){
         player.health -= 1;
+        damage_flash_timer = 10;
+        damage_cooldown_timer = 30;
+    }
+
+    /* Reduce flash timer every frame until the flash disappears*/
+    if(damage_flash_timer > 0){
+        damage_flash_timer--;
+    }
+
+    /* Reduce damage cooldown every frame. Prevents health form dropping too quickly*/
+    if(damage_cooldown_timer > 0){
+        damage_cooldown_timer--;
     }
  }
 
@@ -161,6 +183,14 @@ static void render_map(void){
     /* Render pseudo 3D enemy*/
     enemy_render_3d(&enemy, &player, g_zbuffer);
 
+    /**
+     * Draw red screen flash when player takes damage.
+     * Alpha is low so the game remins visible underneath.
+     */
+    if(damage_flash_timer > 0){
+        DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){255, 0, 0, 80});
+    }
+
     /* Title Area*/
     DrawText("Thimlich Hunt", 40, 25, 32, RAYWHITE);
 
@@ -191,6 +221,16 @@ static void render_map(void){
     /*Debug text */
     DrawText("Use arrow Keys to move", 40, 120, 20, LIGHTGRAY);
     DrawText(TextFormat("Player X: %.2f Y: %.2f", player.x, player.y), 40, 150, 20, LIGHTGRAY);
+
+    /**
+     * Show game-over message when player health reaches zero.
+     * Gameplay updates are stopped in update_game().
+     */
+    if(player.health <= 0){
+        DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
+
+        DrawText("GAME OVER", (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 30, 40, RED);
+    }
 
    
     EndDrawing();
