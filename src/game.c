@@ -21,6 +21,16 @@ static Enemy enemy;
 /* Tracks whether the minimap is visible */
 static int show_minimap = 1;
 
+/**
+ * g_zbuffer - Stores wall distacne for each screen column
+ * 
+ * Description:
+ * Each index represents a vertical screen column.
+ * The value stored is the distance fromthe player to the wall
+ * rendered at that column.
+ */
+float g_zbuffer[NUM_RAYS];
+
  /**
   * process_input - Handles player and system input
   * 
@@ -147,6 +157,9 @@ static void render_map(void){
 
     /* Render pseudo-3D wall view */
     raycast_render_3d(&player);
+
+    /* Render pseudo 3D enemy*/
+    enemy_render_3d(&enemy, &player, g_zbuffer);
 
     /* Title Area*/
     DrawText("Thimlich Hunt", 40, 25, 32, RAYWHITE);

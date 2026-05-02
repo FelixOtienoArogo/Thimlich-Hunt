@@ -13,6 +13,7 @@
 #define FOV 60.0f
 #define NUM_RAYS 320
 #define WALL_HEIGHT 32000.0f
+extern float g_zbuffer[NUM_RAYS];
 
 /**
  * Minimap rendering configuration

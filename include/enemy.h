@@ -1,5 +1,5 @@
 #ifndef ENEMY_H
-#define ENEMY_h
+#define ENEMY_H
 
 #include "player.h"
 
@@ -62,5 +62,15 @@ void enemy_update(Enemy *enemy, Player *player);
  * Return: 1 if anamy touches player, 0 otherwise
  */
 int enemy_check_player_contact(Enemy *enemy, Player *player);
+
+/**
+ * enemy_render_3d - Renders enemy in pseudo-3d view
+ * @enemy: Pointer to enemy
+ * @player: Pointer to player
+ * 
+ * 
+ * Return: Nothing
+ */
+void enemy_render_3d(Enemy *enemy, Player *player, float *g_zbuffer);
 
 #endif

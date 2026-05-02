@@ -7,6 +7,7 @@
 #include <math.h>
 #include "raycast.h"
 #include "map.h"
+#include "config.h"
 
 /**
  * These values must match the map rendering values in game.c
@@ -191,6 +192,13 @@ void raycast_render_3d(Player *player){
         if (corrected_distance < 1.0f){
             corrected_distance = 1.0f;
         }
+
+        /**
+         * Store corrected wall distance for this ray.
+         * Enemy rendering uses this value to determine whether
+         * a wall is closer than the enemy
+         */
+        g_zbuffer[ray] = corrected_distance;
 
         /* Convert wall distacne into wall height*/
         wall_slice_height = WALL_HEIGHT / corrected_distance;
