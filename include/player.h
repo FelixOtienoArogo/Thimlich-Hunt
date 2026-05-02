@@ -8,6 +8,7 @@
  * @angle: Player viewing angle in degrees
  * @speed: Player movement speed
  * @rotation_speed: Player turning speed
+ * @health: Player health points
  */
 typedef struct Player
 {
@@ -16,6 +17,7 @@ typedef struct Player
 	float angle;
 	float speed;
 	float rotation_speed;
+    int health;
 } Player;
 
 /**

@@ -53,6 +53,11 @@ static int show_minimap = 1;
 
     /*Update enemy behavior*/
     enemy_update(&enemy, &player);
+
+    /* Apply damage when enemy touches player*/
+    if(enemy_check_player_contact(&enemy, &player) && player.health > 0){
+        player.health -= 1;
+    }
  }
 
 /**
@@ -167,6 +172,9 @@ static void render_map(void){
 
     }
     
+    /*Render the player health information*/
+    DrawText(TextFormat("Health: %d", player.health), 40, 95, 20, RAYWHITE);
+
     /*Debug text */
     DrawText("Use arrow Keys to move", 40, 120, 20, LIGHTGRAY);
     DrawText(TextFormat("Player X: %.2f Y: %.2f", player.x, player.y), 40, 150, 20, LIGHTGRAY);
@@ -185,7 +193,7 @@ static void render_map(void){
     player_init(&player);
 
     /* Initalize player before starting the loop*/
-    enemy_init(&enemy, 2, 1);
+    enemy_init(&enemy, 8, 8);
 
     while(!WindowShouldClose()){
         process_input();

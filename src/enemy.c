@@ -90,6 +90,31 @@ int enemy_detect_player(Enemy *enemy, Player *player){
 }
 
 /**
+ * enemy_can_move - Checks whether enemy can move ot target position
+ * @x: Targert x-positon in world coordinates
+ * @y: Target y-positon in world coordinates
+ * 
+ * The target world posiotn is covertedin to map tile coordintesl
+ * If the target tile is a wall, movement is blocked
+ * 
+ * Return: 1 if movement is allowed, 0 otherwise
+ */
+static int enemy_can_move(float x, float y){
+    int map_y;
+    int map_x;
+
+    /* Convert world coordinates into map tile coordinates*/
+    map_x = (int)(x / TILE_SIZE);
+    map_y = (int)(y / TILE_SIZE);
+
+    /* Block movement into walls*/
+    if (map_is_wall(map_x, map_y)){
+        return (0);
+    }
+    return (1);
+}
+
+/**
  * enemy_update - Update enemy behavior
  * @enemy: Pointer to enemy
  * #player: Pointer to player
@@ -137,7 +162,43 @@ void enemy_update(Enemy *enemy, Player *player){
      * Normalize direction:
      * dx/ distance and dy/distance produce a unit direction vector
      * Multiplying by speed gives controlled mvement towards the player
+     * Only move if the tarfet position odes not collide with a wall.
      */
-    enemy->x += (dx / distance) * enemy_speed;
-    enemy->y += (dy / distance) * enemy_speed;
+    if(enemy_can_move(enemy->x + ((dx / distance) * enemy_speed), enemy->y + ((dy / distance) * enemy_speed))){
+        enemy->x += (dx / distance) * enemy_speed;
+        enemy->y += (dy / distance) * enemy_speed;  
+    }
+}
+
+/**
+ * enemy_check_player_contact - Checks enemy contact with player
+ * @enemy: Pointer to enemy
+ * @plaher: Pointer to plaher
+ * 
+ * 
+ * Uses disstacne between enemy and plaher to detect contact.
+ * 
+ * Return: q if enemy touches plaher, 0 otherwise
+ */
+int enemy_check_player_contact(Enemy *enemy, Player *player){
+    float dx;
+    float dy;
+    float distance;
+
+    /* Ignore inactive enemy*/
+    if(!enemy->active){
+        return (0);
+    }
+
+    /* Calculate the distance between enemy and player*/
+    dx = player->x - enemy->x;
+    dy = player->y - enemy->y;
+
+    distance = sqrtf((dx * dx) + (dy * dy));
+
+    /*If enemy is close return true*/
+    if(distance < 20.0f){
+        return(1);
+    }
+    return(0);
 }

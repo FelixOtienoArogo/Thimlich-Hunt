@@ -31,6 +31,9 @@
 
     /* Degree turned per frame when pressing left/right*/
     player->rotation_speed = 2.5f;
+
+    /* Player health, this reduces with enemy contact*/
+    player->health = 100;
  }
 
 

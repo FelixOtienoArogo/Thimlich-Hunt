@@ -54,4 +54,13 @@ int enemy_detect_player(Enemy *enemy, Player *player);
  */
 void enemy_update(Enemy *enemy, Player *player);
 
+/**
+ * enemy_check_plaher_contact - Checks enemy contact with player
+ * @enemy: Pointer to enemy
+ * @player: Pointer to player
+ * 
+ * Return: 1 if anamy touches player, 0 otherwise
+ */
+int enemy_check_player_contact(Enemy *enemy, Player *player);
+
 #endif
