@@ -57,14 +57,37 @@ float g_zbuffer[NUM_RAYS];
     }
  }
 
+/**
+ * reset_game - Resets player and enemy state
+ * 
+ * Description:
+ * This function restores the player and enemy to their starting
+ * positons and clears damage feedback timers
+ * 
+ * Return: Nothing
+ */
+static void reset_game(void){
+    player_init(&player);
+    enemy_init(&enemy, 8, 8);
+
+    damage_flash_timer = 0;
+    damage_cooldown_timer = 0;
+}
+
  /**
   * update game - Updates the game state
   * 
   * Return: Nothing
   */
  static void update_game(void){
-    /* Stop updating gameplay when player health reaches zero */
+    /**
+     * When player is dead, stop normal gameplay updates.
+     * Pressing R restarts the game state.
+     */
     if(player.health <= 0){
+        if(IsKeyPressed(KEY_R)){
+            reset_game();
+        }
         return;
     }
 
@@ -230,6 +253,7 @@ static void render_map(void){
         DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
 
         DrawText("GAME OVER", (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 30, 40, RED);
+        DrawText("Press R to restart", (SCREEN_WIDTH / 2) - 110, (SCREEN_HEIGHT / 2) + 25, 24, RAYWHITE);
     }
 
    
@@ -242,11 +266,8 @@ static void render_map(void){
   * Return: Nothing
   */
  void game_run(void){
-    /* Initialize player before starting the loop */
-    player_init(&player);
-
-    /* Initalize player before starting the loop*/
-    enemy_init(&enemy, 8, 8);
+    /* Initialize player and enemy before starting the loop */
+    reset_game();
 
     while(!WindowShouldClose()){
         process_input();
