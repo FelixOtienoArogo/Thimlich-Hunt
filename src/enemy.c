@@ -227,6 +227,16 @@ void enemy_render_3d(Enemy *enemy, Player *player, float *zbuffer){
     float left;
     int ray_index;
     float player_angle_rad;
+    int head_radius;
+    int head_x;
+    int head_y;
+    int body_x;
+    int body_y;
+    int body_width;
+    int body_height;
+    unsigned char enemy_shade;
+    Color enemy_head_color;
+    Color enemy_body_color;
 
     /* Validate pointers and Skip render ing if enemy is inactive*/
     if (!enemy || !player || !zbuffer || !enemy->active){
@@ -307,6 +317,23 @@ void enemy_render_3d(Enemy *enemy, Player *player, float *zbuffer){
         return;
     }
 
+    /**
+     * Calculate enemy brightness based on distance.
+     * Close enemies appear brighter, far enemies appear darker.
+     */
+    enemy_shade = (unsigned char)(255.0f - (distance * 0.7f));
+
+    /* Keep enemy visible even when far away*/
+    if (enemy_shade < 80){
+        enemy_shade = 80;
+    }
+
+    /* Build shaded enemy colors*/
+    enemy_head_color = (Color){
+        enemy_shade, enemy_shade / 2, 0, 255
+    };
+    enemy_body_color = (Color){enemy_shade, 0, 0, 255};
+
     /* Scale enemy size based on distance*/
     enemy_height = (TILE_SIZE * SCREEN_HEIGHT) / distance;
     enemy_width = enemy_height * 0.5f;
@@ -328,6 +355,22 @@ void enemy_render_3d(Enemy *enemy, Player *player, float *zbuffer){
         return;
     }
 
-    /*Render enemy as a vertical rectangle */
-    DrawRectangle((int)left,(int)top, (int)enemy_height, (int)enemy_height, RED);
+    /* Size the head relative to total enemy height */
+    head_radius = (int)(enemy_width * 0.35f);
+
+    /* Position the head at the upper section of the enemy*/
+    head_x = (int)screen_x;
+    head_y = (int)(top + (enemy_height * 0.22f));
+
+    /* Position the body below the head*/
+    body_width = (int)(enemy_width * 0.70f);
+    body_height = (int)(enemy_height * 0.55f);
+    body_x = (int)(screen_x - (body_width / 2));
+    body_y = (int)(top + (enemy_height * 0.38f));
+
+    /* Draw enemy head*/
+    DrawCircle(head_x, head_y, head_radius, enemy_head_color);
+
+    /* Draw enemy body */
+    DrawRectangle(body_x, body_y, body_width, body_height, enemy_body_color);
 }
