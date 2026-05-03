@@ -32,6 +32,9 @@ static int damage_flash_timer = 0;
 /* Prevents player from taking damage every frame*/
 static int damage_cooldown_timer = 0;
 
+/* Prevent player from attacking every frame */
+static int attack_cooldown_timer = 0;
+
 /**
  * g_zbuffer - Stores wall distacne for each screen column
  * 
@@ -86,6 +89,83 @@ static void reset_game(void){
     damage_cooldown_timer = 0;
 }
 
+/**
+ * player_attack - Checks if player hits an enemy
+ * 
+ * Description:
+ * This function performs a simple melee attack when SPACE is pressed.
+ * An enemy is hit if:
+ * -It is active
+ * -It is close enough to the player
+ * -It is infront of the player
+ * 
+ * Return: Nothing
+ */
+static void player_attack(void){
+    int i;
+    float dx;
+    float dy;
+    float distance;
+    float player_angle_rad;
+    float forward_x;
+    float forward_y;
+    float dot;
+
+    /* Only attack when SPACE is pressed and cooldown is ready*/
+    if(!IsKeyPressed(KEY_SPACE) || attack_cooldown_timer > 0){
+        return;
+    }
+
+    /* Convert player viewing angle from degrees to radians*/
+    player_angle_rad = player.angle * DEG2RAD;
+
+    /* Calculate player's forward direction*/
+    forward_x = cosf(player_angle_rad);
+    forward_y = sinf(player_angle_rad);
+
+    /* Check all enemies for a possible hit*/
+    for (i = 0; i < MAX_ENEMIES; i++){
+        /* Skip enemies that are already inactive*/
+        if(!enemies[i].active){
+            continue;
+        }
+
+        /* Calculate enemy position relative to player*/
+        dx = enemies[i].x - player.x;
+        dy = enemies[i].y - player.y;
+
+        /*Calculate distance from player to enemy*/
+        distance = sqrtf((dx * dx) + (dy * dy));
+
+        /*Skip enemy if it is outside melee attack range*/
+        if(distance > TILE_SIZE * 1.2f){
+            continue;
+        }
+
+        /**
+         * Dot product checks whether enemy is in front of player.
+         * Higher value mens enemy is more directly ahead.
+         */
+        dot = (dx * forward_x) + (dy * forward_y);
+
+        /* Skip enemy if not clearly in front of player */
+        if(dot < distance * 0.6f){
+            continue;
+        }
+
+        /*Deactivate enemy after successful hit*/
+        enemies[i].active = 0;
+
+        /*Start cooldown after attack lands*/
+        attack_cooldown_timer = 20;
+
+        return;
+    }
+
+    /*Start cooldown even if attack misses */
+    attack_cooldown_timer = 20;
+}
+
  /**
   * update game - Updates the game state
   * 
@@ -108,6 +188,9 @@ static void reset_game(void){
 
     /* Update player (movement + colision)*/
     player_update(&player);
+
+    /* Handle player melee attack */
+    player_attack();
 
     /* Tarack whether any enemy has touched the player this frame */
     player_hit = 0;
@@ -140,6 +223,11 @@ static void reset_game(void){
     /* Reduce damage cooldown every frame. Prevents health form dropping too quickly*/
     if(damage_cooldown_timer > 0){
         damage_cooldown_timer--;
+    }
+
+    /* Reduce attack cooldown every frame. This prevents attack spamming.*/
+    if(attack_cooldown_timer > 0){
+        attack_cooldown_timer--;
     }
  }
 
@@ -200,6 +288,61 @@ static void render_map(void){
     }
 }
 
+/**
+ * sort_enemies_by_distance - sort enemies from far to near
+ * @player: Pointer to plaher
+ * 
+ * Description:
+ * This uses a simple bubble sort to order enemies so that
+ * farther enemies are rendered first, and closer ones last.
+ * 
+ * Return: Nothing
+ */
+static void sort_enemies_by_distance(Player *player){
+    int i;
+    int j;
+    float dist_a;
+    float dist_b;
+    Enemy tmp;
+
+    /* Loop through all enemies except the last one*/
+    for (i = 0; i < MAX_ENEMIES; i++){
+        /* Compare adjacent enemies*/
+        for(j = 0; j < MAX_ENEMIES - i - 1; j++){
+            /**
+             * Calculate distance from player to current enemy
+             * Using Euclidean distance formula
+             */
+            dist_a = sqrtf(
+                (enemies[j].x - player->x) *
+                (enemies[j].x - player->x) +
+                (enemies[j].y - player->y) *
+                (enemies[j].y - player->y)
+            );
+
+            /**
+             * Calculate distance from player to next enemy
+             */
+            dist_b = sqrtf(
+                (enemies[j + 1].x - player->x) *
+                (enemies[j + 1].x - player->x) +
+                (enemies[j + 1].y - player->y) *
+                (enemies[j + 1].y - player->y)
+            );
+
+            /**
+             * Swap enemies if current is closer than next
+             * This ensures farther enemies come first
+             */
+            if(dist_a < dist_b){
+                tmp = enemies[j];
+                enemies[j] = enemies[j + 1];
+                enemies[j + 1] = tmp;
+            }
+        }
+    }
+}
+
  /**
   * render_game - Draws the current game feature
   * 
@@ -231,6 +374,13 @@ static void render_map(void){
 
     /* Render pseudo-3D wall view */
     raycast_render_3d(&player);
+
+    /**
+     * Sort enemies based on distacne from player.
+     * This ensures correct rendering order:
+     * farther enemies drawn first, closer ones last.
+     */
+    sort_enemies_by_distance(&player);
 
     /* Render all enemies in pseudo 3D view*/
     for(i = 0; i < MAX_ENEMIES; i++){
@@ -275,8 +425,7 @@ static void render_map(void){
     DrawText(TextFormat("Health: %d", player.health), 40, 95, 20, RAYWHITE);
 
     /*Debug text */
-    DrawText("Use arrow Keys to move", 40, 120, 20, LIGHTGRAY);
-    DrawText(TextFormat("Player X: %.2f Y: %.2f", player.x, player.y), 40, 150, 20, LIGHTGRAY);
+    DrawText("Use arrow Keys to move | SPACE to attack", 40, 120, 20, LIGHTGRAY);
 
     /**
      * Show game-over message when player health reaches zero.
