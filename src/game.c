@@ -15,8 +15,13 @@
 
  /* Global (module-local) player instance */
 static Player player;
-/* Global (module-local) enemy instance */
-static Enemy enemy;
+/**
+ * MAX_ENEMIES - Maximum number of enemies active in the game
+ */
+#define MAX_ENEMIES 3
+
+/*Global module-local enemy list */
+static Enemy enemies[MAX_ENEMIES];
 
 /* Tracks whether the minimap is visible */
 static int show_minimap = 1;
@@ -68,7 +73,14 @@ float g_zbuffer[NUM_RAYS];
  */
 static void reset_game(void){
     player_init(&player);
-    enemy_init(&enemy, 8, 8);
+
+    /**
+     * Place enemies on different walkable map tiles.
+     * These tile positons can be adjusted as the map evolves.
+     */
+    enemy_init(&enemies[0], 8, 8);
+    enemy_init(&enemies[1], 7, 5);
+    enemy_init(&enemies[2], 8, 7);
 
     damage_flash_timer = 0;
     damage_cooldown_timer = 0;
@@ -80,6 +92,9 @@ static void reset_game(void){
   * Return: Nothing
   */
  static void update_game(void){
+    int i;
+    int player_hit;
+
     /**
      * When player is dead, stop normal gameplay updates.
      * Pressing R restarts the game state.
@@ -94,11 +109,24 @@ static void reset_game(void){
     /* Update player (movement + colision)*/
     player_update(&player);
 
-    /*Update enemy behavior*/
-    enemy_update(&enemy, &player);
+    /* Tarack whether any enemy has touched the player this frame */
+    player_hit = 0;
 
-    /* Apply damage when enemy touches player and the damage cooldown has expire. The flash timer gives clear visual feedback that damage happene*/
-    if(enemy_check_player_contact(&enemy, &player) && player.health > 0 && damage_cooldown_timer == 0){
+    /* Update all active enemies*/
+    for (i = 0; i < MAX_ENEMIES; i++){
+        /*Update enemy behavior*/
+        enemy_update(&enemies[i], &player);
+
+        if (enemy_check_player_contact(&enemies[i], &player)){
+            player_hit = 1;
+        }
+    }
+
+    /**
+     * Apply damage only once per cooldown window, even if multiple
+     * enemies touch the plaher at the same time.
+     */
+    if(player_hit && player.health > 0 && damage_cooldown_timer == 0){
         player.health -= 1;
         damage_flash_timer = 10;
         damage_cooldown_timer = 30;
@@ -188,6 +216,7 @@ static void render_map(void){
     float scale;
     int player_screen_x;
     int player_screen_y;
+    int i;
 
     /* Convert world coordinates to rendered map coordinates*/
     scale = (float)MAP_RENDER_TILE / (float)TILE_SIZE;
@@ -203,8 +232,10 @@ static void render_map(void){
     /* Render pseudo-3D wall view */
     raycast_render_3d(&player);
 
-    /* Render pseudo 3D enemy*/
-    enemy_render_3d(&enemy, &player, g_zbuffer);
+    /* Render all enemies in pseudo 3D view*/
+    for(i = 0; i < MAX_ENEMIES; i++){
+        enemy_render_3d(&enemies[i], &player, g_zbuffer);
+    }
 
     /**
      * Draw red screen flash when player takes damage.
@@ -228,8 +259,10 @@ static void render_map(void){
         */
         DrawCircle(player_screen_x, player_screen_y, 7, RED);
 
-        /* Draw enemy on minimap */
-        enemy_draw_minimap(&enemy);
+        /* Draw all enemies on the minimap */
+        for(i = 0; i < MAX_ENEMIES; i++){
+            enemy_draw_minimap(&enemies[i]);
+        }
 
         /**
         * Draw  rays showing where the player is looking
