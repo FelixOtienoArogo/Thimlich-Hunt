@@ -35,6 +35,15 @@ static int damage_cooldown_timer = 0;
 /* Prevent player from attacking every frame */
 static int attack_cooldown_timer = 0;
 
+/* Controls short weapon swing visual feedback*/
+static int attack_flash_timer = 0;
+
+/* Controls short attack result text feedback*/
+static int attack_text_timer = 0;
+
+/*Stores last attack result: 1 = hit, 2 = miss*/
+static int attack_result = 0;
+
 /**
  * g_zbuffer - Stores wall distacne for each screen column
  * 
@@ -153,17 +162,28 @@ static void player_attack(void){
             continue;
         }
 
-        /*Deactivate enemy after successful hit*/
-        enemies[i].active = 0;
+        /* Reduce enemy health after successful hit*/
+        enemies[i].health -= 1;
 
-        /*Start cooldown after attack lands*/
+        /*Deactivate enemy only when health reaches zero*/
+        if(enemies[i].health <= 0){
+            enemies[i].active = 0;
+        }
+
+        /*Start cooldown after attack and visual feedback*/
         attack_cooldown_timer = 20;
+        attack_flash_timer = 6;
+        attack_text_timer = 20;
+        attack_result = 1;
 
         return;
     }
 
-    /*Start cooldown even if attack misses */
+    /*Start cooldown and miss foeedback even if attack misses */
     attack_cooldown_timer = 20;
+    attack_flash_timer = 6;
+    attack_text_timer = 20;
+    attack_result = 2;
 }
 
  /**
@@ -228,6 +248,16 @@ static void player_attack(void){
     /* Reduce attack cooldown every frame. This prevents attack spamming.*/
     if(attack_cooldown_timer > 0){
         attack_cooldown_timer--;
+    }
+
+    /* Reduce weapon swing flash timer*/
+    if(attack_flash_timer > 0){
+        attack_flash_timer--;
+    }
+
+    /*Reduce attack result text timer*/
+    if(attack_text_timer > 0){
+        attack_text_timer--;
     }
  }
 
@@ -393,6 +423,34 @@ static void sort_enemies_by_distance(Player *player){
      */
     if(damage_flash_timer > 0){
         DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){255, 0, 0, 80});
+    }
+
+    /**
+     * Draw a quick weapon swing flash.
+     * This gives feedback that the player attacked.
+     */
+    if(attack_flash_timer > 0){
+        DrawRectangle(
+            (SCREEN_WIDTH / 2) - 40,
+            (SCREEN_HEIGHT / 2) + 80,
+            80,
+            120,
+            (Color){220, 220, 220, 120}
+        );
+    }
+
+    /**
+     * Draw attack result text.
+     * HIT confirms enemy was defeated, MISS confirms attack happened
+     * but no enemy was in range
+     */
+    if(attack_text_timer > 0){
+        if(attack_result == 1){
+            DrawText("HIT!", (SCREEN_WIDTH / 2) - 35, (SCREEN_HEIGHT / 2) - 80, 32, GREEN);
+        }
+        if(attack_result == 2){
+            DrawText("MISS!", (SCREEN_WIDTH / 2) - 45, (SCREEN_HEIGHT / 2) - 80, 32, RAYWHITE);
+        }
     }
 
     /* Title Area*/

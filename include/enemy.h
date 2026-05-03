@@ -7,12 +7,14 @@
  * struct Enemy - stores enemy state
  * @x: Enemy x-position in world coordinates
  * @y: Enemy y-position in world coordinates
+ * @health: Enemy health points
  * @active: Whether enemy is currently alive/active
  * 
  */
 typedef struct Enemy{
     float x;
     float y;
+    int health;
     int active;
 } Enemy;
 

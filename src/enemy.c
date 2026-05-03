@@ -22,8 +22,18 @@
  * Return: Nothing
  */
 void enemy_init(Enemy *enemy, int tile_x, int tile_y){
+    if(!enemy){
+        return;
+    }
+
+    /* Convert tile position to center world coordinates */
     enemy->x = (tile_x * TILE_SIZE) + (TILE_SIZE / 2.0f);
     enemy->y = (tile_y * TILE_SIZE) + (TILE_SIZE / 2.0f);
+
+    /* Give enemy starting health*/
+    enemy->health = 3;
+
+    /* Mark enemy as active*/
     enemy->active = 1;
 }
 
