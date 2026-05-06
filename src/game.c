@@ -69,6 +69,22 @@ typedef enum GameState{
 /* Tracks the current state of the game*/
 static GameState game_state = GAME_PLAYING;
 
+/**
+ * struct ControlPoint - Represetns the castle reclaim objective
+ * @x: Control point x-position in world coordinates
+ * @y: Control point y-position in world coordinates
+ * @active: whether the control point can currently be used
+ */
+typedef struct ControlPoint{
+    float x;
+    float y;
+    int active;
+} ControlPoint;
+
+/*Castle objective used to reclaim the fortress*/
+static ControlPoint control_point;
+
+
  /**
   * process_input - Handles player and system input
   * 
@@ -89,6 +105,56 @@ static GameState game_state = GAME_PLAYING;
     }
  }
 
+ /**
+  * control_point_init - Initializes the fortress control point
+  * @tile_x: Control point tile x-coordinate
+  * @tile_y: Contorl point tile y-coordinate
+  * 
+  * Description:
+  * The control point is placed at the center of a map tile.
+  * The player must reach this point after defeating all enemies
+  * to reclaim the castle.
+  * 
+  * Return: Nothing
+  */
+ static void control_point_init(int tile_x, int tile_y){
+    control_point.x = (tile_x * TILE_SIZE) + (TILE_SIZE / 2);
+    control_point.y = (tile_y * TILE_SIZE) + (TILE_SIZE / 2);
+    control_point.active = 0;
+ }
+
+ /**
+  * player_reached_control_point - Checks if player reached objective
+  * 
+  * Description:
+  * The control point only matters after all enemis are defeated.
+  * If the player is close enough, the castler is reclaimed.
+  * 
+  * Return: 1 if player reached control point, otherwise 0
+  */
+ static int player_reached_control_point(void){
+    float dx;
+    float dy;
+    float distance;
+
+    /* Contorl point must be active before it can trigger victory */
+    if(!control_point.active){
+        return(0);
+    }
+
+    /* Calculate distacne between player and control point*/
+    dx = control_point.x - player.x;
+    dy = control_point.y - player.y;
+    distance = sqrtf((dx * dx) + (dy * dy));
+
+
+    /*Player is close enough to reclim the fortress*/
+    if (distance < TILE_SIZE * 0.6f){
+        return(1);
+    }
+    return(0);
+ }
+
 /**
  * reset_game - Resets player and enemy state
  * 
@@ -100,6 +166,9 @@ static GameState game_state = GAME_PLAYING;
  */
 static void reset_game(void){
     player_init(&player);
+
+    /* Place Fortress Heart objective inside the castle*/
+    control_point_init(5,5);
 
     /**
      * Place enemies on different walkable map tiles.
@@ -309,8 +378,16 @@ static int all_enemies_defeated(void){
         return;
     }
 
-    /* Switch to victory state when all enemies are defeated*/
+    /**
+     * Activate the Fortress Hearth after all enemies are defeated.
+     * The player must still reach it to reclaim the castle.
+     */
     if(all_enemies_defeated()){
+        control_point.active = 1;
+    }
+
+    /* Reclaim castle only after reaching the active control point*/
+    if(player_reached_control_point()){
         game_state = GAME_VICTORY;
     }
  }
@@ -527,6 +604,18 @@ static void sort_enemies_by_distance(Player *player){
         }
 
         /**
+         * Draw Fortress Heart on minimap only after enemies are defeated.
+         * This guides the player to the reclaim objective.
+         */
+        if(control_point.active){
+            DrawCircle(
+                MAP_OFFSET_X + (int)(control_point.x * scale),
+                MAP_OFFSET_Y + (int)(control_point.y * scale),
+                6,
+                GOLD);
+        }
+
+        /**
         * Draw  rays showing where the player is looking
         */
         raycast_draw_rays(&player);
@@ -557,7 +646,7 @@ static void sort_enemies_by_distance(Player *player){
     if(game_state == GAME_VICTORY){
         DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
 
-        DrawText("YOU WIN", (SCREEN_WIDTH / 2) - 90, (SCREEN_HEIGHT / 2) - 40, 40, GREEN);
+        DrawText("CASTLE RECLAIMED", (SCREEN_WIDTH / 2) - 100, (SCREEN_HEIGHT / 2) - 40, 40, GREEN);
         DrawText("Press R to restart", (SCREEN_WIDTH / 2) - 110, (SCREEN_HEIGHT / 2) + 25, 24, RAYWHITE);
     }
 
