@@ -54,6 +54,21 @@ static int attack_result = 0;
  */
 float g_zbuffer[NUM_RAYS];
 
+/**
+ * enum GameState - Represents the current game state
+ * @GAME_PLAYING: Normal gameplay is active
+ * @GAME_OVER: Player has lost all health
+ * @GAME_VICTORY: All enemies have been defeated
+ */
+typedef enum GameState{
+    GAME_PLAYING,
+    GAME_OVER,
+    GAME_VICTORY
+} GameState;
+
+/* Tracks the current state of the game*/
+static GameState game_state = GAME_PLAYING;
+
  /**
   * process_input - Handles player and system input
   * 
@@ -96,6 +111,9 @@ static void reset_game(void){
 
     damage_flash_timer = 0;
     damage_cooldown_timer = 0;
+
+    /* Return game to normal playing state*/
+    game_state = GAME_PLAYING;
 }
 
 /**
@@ -186,6 +204,31 @@ static void player_attack(void){
     attack_result = 2;
 }
 
+/**
+ * all_enemies_defeated - Checks if all enemies are inactive
+ * 
+ * Description:
+ * This function loops through the enemy list and checks whether
+ * any enemy is still active. If no active enemies remain, the
+ * player has completed the combat objective.
+ * 
+ * Return:  1 if all enemies are defeated, otherwise 0
+ */
+static int all_enemies_defeated(void){
+    int i;
+
+    /* Check every enemy in the current level */
+    for(i = 0; i < MAX_ENEMIES; i++){
+        /* If one enemy is still active, victory is not achieved*/
+        if(enemies[i].active){
+            return (0);
+        }
+    }
+
+    /* No active enemies remain*/
+    return (1);
+}
+
  /**
   * update game - Updates the game state
   * 
@@ -196,10 +239,10 @@ static void player_attack(void){
     int player_hit;
 
     /**
-     * When player is dead, stop normal gameplay updates.
+     * If game is over or won, stop normal gameplay updates..
      * Pressing R restarts the game state.
      */
-    if(player.health <= 0){
+    if(game_state == GAME_OVER || game_state == GAME_VICTORY){
         if(IsKeyPressed(KEY_R)){
             reset_game();
         }
@@ -258,6 +301,17 @@ static void player_attack(void){
     /*Reduce attack result text timer*/
     if(attack_text_timer > 0){
         attack_text_timer--;
+    }
+
+    /* Switch to game-over state when player health reaches zero*/
+    if(player.health <= 0){
+        game_state = GAME_OVER;
+        return;
+    }
+
+    /* Switch to victory state when all enemies are defeated*/
+    if(all_enemies_defeated()){
+        game_state = GAME_VICTORY;
     }
  }
 
@@ -486,13 +540,24 @@ static void sort_enemies_by_distance(Player *player){
     DrawText("Use arrow Keys to move | SPACE to attack", 40, 120, 20, LIGHTGRAY);
 
     /**
-     * Show game-over message when player health reaches zero.
+     * Show game-over overlay when player loses.
      * Gameplay updates are stopped in update_game().
      */
-    if(player.health <= 0){
+    if(game_state == GAME_OVER){
         DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
 
         DrawText("GAME OVER", (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 30, 40, RED);
+        DrawText("Press R to restart", (SCREEN_WIDTH / 2) - 110, (SCREEN_HEIGHT / 2) + 25, 24, RAYWHITE);
+    }
+
+    /**
+     * Show victory overlay when all enemies are defeated.
+     * Normal gameplay updates are paused in update_game().
+     */
+    if(game_state == GAME_VICTORY){
+        DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
+
+        DrawText("YOU WIN", (SCREEN_WIDTH / 2) - 90, (SCREEN_HEIGHT / 2) - 40, 40, GREEN);
         DrawText("Press R to restart", (SCREEN_WIDTH / 2) - 110, (SCREEN_HEIGHT / 2) + 25, 24, RAYWHITE);
     }
 
