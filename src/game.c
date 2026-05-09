@@ -504,6 +504,125 @@ static void sort_enemies_by_distance(Player *player){
     }
 }
 
+/**
+ * render_control_point_3d - Renders Fortress Heart in pseudo-3D view
+ * 
+ * Description:
+ * This function projects the Fortress Heart from 2D world coordinates
+ * into the player's 3D view. It uses the same billboard-style rendering
+ * approach as enemies.
+ * 
+ * 
+ * The control point only renders when active, and it uses the z-buffer
+ * so it does not appear through walls.
+ * 
+ * Return: Nothing
+ */
+static void render_control_point_3d(void){
+    float dx;
+    float dy;
+    float distance;
+    float player_angle_rad;
+    float angle_to_point;
+    float angle_diff;
+    float screen_x;
+    float point_height;
+    float point_width;
+    float top;
+    float left;
+    int ray_index;
+
+    /* Do not render Fortress Heart until it is active */
+    if(!control_point.active){
+        return;
+    }
+
+    /* Calculate control_point position relative to player */
+    dx = control_point.x - player.x;
+    dy = control_point.y - player.y;
+
+    /* Calculate distance between player and control point*/
+    distance = sqrtf((dx * dx) + (dy * dy));
+
+    /* Avoid rendering too close to prevetn extreme scaling*/
+    if(distance < 1.0f){
+        return;
+    }
+
+    /* Convert player angle from degrees to radians*/
+    player_angle_rad = player.angle * DEG2RAD;
+
+    /* Calculate angle from player to control point*/
+    angle_to_point = atan2f(dy, dx);
+
+    /* Calculate difference between view direction and control point*/
+    angle_diff = angle_to_point - player_angle_rad;
+
+    /* Normalize angle difference to range [-PI, PI]*/
+    while(angle_diff > PI){
+        angle_diff -= (2 * PI);
+    }
+    while(angle_diff < -PI){
+        angle_diff += (2 * PI);
+    }
+
+    /* Skip rendering if control point is outside field of view */
+    if(fabsf(angle_diff) > ((FOV * DEG2RAD) / 2)){
+        return;
+    }
+
+    /* Convert angle difference into screen X position*/
+    screen_x = (SCREEN_WIDTH / 2) + ((angle_diff / ((FOV * DEG2RAD) / 2)) * (SCREEN_WIDTH / 2));
+
+    /* Skip if projected outside screen */
+    if(screen_x < 0 || screen_x >= SCREEN_WIDTH){
+        return;
+    }
+
+    /* Convert screen x position into matching z-buffer ray index*/
+    ray_index = (int)((screen_x / SCREEN_WIDTH) * NUM_RAYS);
+
+    /* Validate ray index before reading z-buffer*/
+    if(ray_index < 0 || ray_index >= NUM_RAYS){
+        return;
+    }
+
+    /* Hide Fortress Heart if a wall is closer */
+    if(distance > g_zbuffer[ray_index]){
+        return;
+    }
+
+    /* Scale marker size based on distance */
+    point_height = (TILE_SIZE * SCREEN_HEIGHT) / distance;
+    point_width = point_height * 0.45f;
+
+    /* Clamp marker size so it does not become too large*/
+    if(point_height > SCREEN_HEIGHT / 2){
+        point_height = SCREEN_HEIGHT / 2;
+    }
+
+    /* Calculate top-left position*/
+    top = (SCREEN_HEIGHT / 2) - (point_height / 2);
+    left = screen_x - (point_width / 2);
+
+    /*Draw glowing base of Fortress Heart */
+    DrawRectangle(
+        (int)left,
+        (int)top,
+        (int)point_width,
+        (int)point_height,
+        GOLD
+    );
+
+    /* Draw center core to make it look like an objective marker*/
+    DrawCircle(
+        (int)screen_x,
+        (int)(top + (point_height * 0.35f)),
+        (int)(point_width * 0.45f),
+        YELLOW
+    );
+}
+
  /**
   * render_game - Draws the current game feature
   * 
@@ -547,6 +666,9 @@ static void sort_enemies_by_distance(Player *player){
     for(i = 0; i < MAX_ENEMIES; i++){
         enemy_render_3d(&enemies[i], &player, g_zbuffer);
     }
+
+    /* Render Fortress Heart objective in pseudo-3D view*/
+    render_control_point_3d();
 
     /**
      * Draw red screen flash when player takes damage.
