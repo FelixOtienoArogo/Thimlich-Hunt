@@ -11,7 +11,7 @@
  * Raycasting configuration
  */
 #define FOV 60.0f
-#define NUM_RAYS 320
+#define NUM_RAYS SCREEN_WIDTH
 #define WALL_HEIGHT 32000.0f
 extern float g_zbuffer[NUM_RAYS];
 

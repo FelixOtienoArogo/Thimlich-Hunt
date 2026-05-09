@@ -168,7 +168,7 @@ static void reset_game(void){
     player_init(&player);
 
     /* Place Fortress Heart objective inside the castle*/
-    control_point_init(5,5);
+    control_point_init(4,5);
 
     /**
      * Place enemies on different walkable map tiles.
