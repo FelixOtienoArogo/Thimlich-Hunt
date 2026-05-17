@@ -8,8 +8,8 @@ BUILD_DIR := build
 SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
-CFLAGS := -Wall -Wextra -Werror -std=c99 -I$(INC_DIR)
-LDFLAGS := -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+CFLAGS := -Wall -Wextra -Werror -std=c99 -I$(INC_DIR) -I/opt/homebrew/include
+LDFLAGS := -L/opt/homebrew/lib -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 
 .PHONY: all build run clean rebuild
 
