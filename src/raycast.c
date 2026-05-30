@@ -1,27 +1,29 @@
 /**
  * @file raycast.c
  * @brief Raycasting logic for Thimlich Hunt.
- * 
+ *
  */
 #include "raylib.h"
 #include <math.h>
 #include "raycast.h"
 #include "map.h"
 #include "config.h"
+#include "game.h"
 
 /**
  * raycast_draw_rays - Draws multiple rays (field of view)
  * @player: Pointer to player structure
- * 
+ *
  * The rays start from the player position and moves forward in the
  * direction the player is facing. They advances step by step until it
  * hits a wall or reaches the maximum ray
  *  length.
  * Each ray is slightly offset in angle to simulate vision.
- * 
+ *
  * Return: Nothing
  */
-void raycast_draw_rays(Player *player){
+void raycast_draw_rays(Player *player)
+{
     float ray_x;
     float ray_y;
     float start_angle;
@@ -53,7 +55,8 @@ void raycast_draw_rays(Player *player){
     /* Angle between each ray*/
     angle_step = FOV / NUM_RAYS;
 
-    for (i = 0; i < NUM_RAYS; i++){
+    for (i = 0; i < NUM_RAYS; i++)
+    {
         /* Convert player angle from degrees to radians*/
         ray_angle = (start_angle + i * angle_step) * DEG2RAD;
 
@@ -68,7 +71,8 @@ void raycast_draw_rays(Player *player){
         /* Limit ray distance so it does not run forever*/
         max_steps = 1000;
 
-        for (step = 0; step < max_steps; step++){
+        for (step = 0; step < max_steps; step++)
+        {
             /* Move the ray forward*/
             ray_x += ray_step_x;
             ray_y += ray_step_y;
@@ -78,7 +82,8 @@ void raycast_draw_rays(Player *player){
             map_y = (int)(ray_y / TILE_SIZE);
 
             /*stop ray when it hits a wall*/
-            if(map_is_wall(map_x, map_y)){
+            if (map_is_wall(map_x, map_y))
+            {
                 break;
             }
         }
@@ -88,25 +93,24 @@ void raycast_draw_rays(Player *player){
 
         /*Dray the ray from player position to hit point*/
         DrawLine(player_screen_x, player_screen_y, ray_screen_x, ray_screen_y, YELLOW);
-
     }
 }
-
 
 /**
  * raycast_render_3d - Renders pseudo-3D wall slices using DDA raycasting
  * @player: Pointer to player structure
  *
- * Description: 
+ * Description:
  * This function casts rays across the player's field of view using
  * the Digital Differential Analyser algorithm. DDA walks from grid
  * boundary to grid boundary instead of moving in small float steps.
- * 
+ *
  * This gives more stable wall hit detection and smoother wall tops.
- * 
+ *
  * Return: Nothing
  */
-void raycast_render_3d(Player *player){
+void raycast_render_3d(Player *player)
+{
     float start_angle;
     float ray_angle;
     float ray_dir_x;
@@ -129,7 +133,14 @@ void raycast_render_3d(Player *player){
     int slice_width;
     int wall_top;
     int wall_bottom;
-    Color wall_color;
+    float brightness;
+    int texture_y;
+    int draw_y;
+    float texture_pos;
+    float texture_step;
+    Color tex_color;
+    int texture_x;
+    float wall_hit;
 
     /* Start from the left edge of the player's field of view*/
     start_angle = player->angle - (FOV / 2.0f);
@@ -138,10 +149,11 @@ void raycast_render_3d(Player *player){
     angle_step = FOV / NUM_RAYS;
 
     /*Width of each vertical wall slice on screen*/
-    slice_width = SCREEN_WIDTH / NUM_RAYS;
+    slice_width = (SCREEN_WIDTH / NUM_RAYS) + 1;
 
     /* Cast one ray for each configured ray column*/
-    for(ray = 0; ray < NUM_RAYS; ray++){
+    for (ray = 0; ray < NUM_RAYS; ray++)
+    {
         /* Convert player angle from degrees to radians*/
         ray_angle = (start_angle + ray * angle_step) * DEG2RAD;
 
@@ -154,17 +166,21 @@ void raycast_render_3d(Player *player){
         map_y = (int)(player->y / TILE_SIZE);
 
         /* Calculate distacne ray travels from one x-side to next x-side, and from one y-side to next y-side*/
-        if(ray_dir_x == 0){
+        if (ray_dir_x == 0)
+        {
             delta_dist_x = 1000000.0f;
         }
-        else{
+        else
+        {
             delta_dist_x = fabsf(TILE_SIZE / ray_dir_x);
         }
 
-        if(ray_dir_y == 0){
+        if (ray_dir_y == 0)
+        {
             delta_dist_y = 1000000.0f;
         }
-        else{
+        else
+        {
             delta_dist_y = fabsf(TILE_SIZE / ray_dir_y);
         }
 
@@ -172,11 +188,13 @@ void raycast_render_3d(Player *player){
          * Determine whether ray moves left or right across map tiles.
          * Also calculate initial distance to first vertival grid boundary.
          */
-        if(ray_dir_x < 0){
+        if (ray_dir_x < 0)
+        {
             step_x = -1;
             side_dist_x = (player->x - (map_x * TILE_SIZE)) * delta_dist_x / TILE_SIZE;
         }
-        else{
+        else
+        {
             step_x = 1;
             side_dist_x = (((map_x + 1) * TILE_SIZE) - player->x) * delta_dist_x / TILE_SIZE;
         }
@@ -185,11 +203,13 @@ void raycast_render_3d(Player *player){
          * Determine whether ray moves up or down across map tiles.
          * Also calculate initial distance to first horizontal grid boundary.
          */
-        if(ray_dir_y < 0){
+        if (ray_dir_y < 0)
+        {
             step_y = -1;
             side_dist_y = (player->y - (map_y * TILE_SIZE)) * delta_dist_y / TILE_SIZE;
         }
-        else{
+        else
+        {
             step_y = 1;
             side_dist_y = (((map_y + 1) * TILE_SIZE) - player->y) * delta_dist_y / TILE_SIZE;
         }
@@ -202,21 +222,25 @@ void raycast_render_3d(Player *player){
          * DDA loop:
          * Move to the next closest grid boundary until a wall tile is hit.
          */
-        while(!hit){
+        while (!hit)
+        {
             /* Move to next vertical or horizontal grid boundary*/
-            if(side_dist_x < side_dist_y){
+            if (side_dist_x < side_dist_y)
+            {
                 side_dist_x += delta_dist_x;
                 map_x += step_x;
                 side = 0;
             }
-            else{
+            else
+            {
                 side_dist_y += delta_dist_y;
                 map_y += step_y;
                 side = 1;
             }
 
             /* Stop when ray reaches a wall tile*/
-            if(map_is_wall(map_x, map_y)){
+            if (map_is_wall(map_x, map_y))
+            {
                 hit = 1;
             }
         }
@@ -225,15 +249,18 @@ void raycast_render_3d(Player *player){
          * Calculate perpendicular wall distance.
          * This avoids fisheye distortion
          */
-        if (side == 0){
+        if (side == 0)
+        {
             perp_wall_dist = side_dist_x - delta_dist_x;
         }
-        else{
+        else
+        {
             perp_wall_dist = side_dist_y - delta_dist_y;
         }
 
         /*Avoid division by zero or extremely large wall slices*/
-        if(perp_wall_dist < 1.0f){
+        if (perp_wall_dist < 1.0f)
+        {
             perp_wall_dist = 1.0f;
         }
 
@@ -247,7 +274,8 @@ void raycast_render_3d(Player *player){
         wall_slice_height = WALL_HEIGHT / perp_wall_dist;
 
         /* Keep wall slice from exceeding screen height too much*/
-        if(wall_slice_height > SCREEN_HEIGHT){
+        if (wall_slice_height > SCREEN_HEIGHT)
+        {
             wall_slice_height = SCREEN_HEIGHT;
         }
 
@@ -258,36 +286,141 @@ void raycast_render_3d(Player *player){
         /* Calculate horizontal screen position*/
         slice_x = ray * slice_width;
 
-        /*Draw sky*/
-        DrawRectangle(slice_x, 0, slice_width, wall_top, DARKBLUE);
-
         /**
-         * Shade wall based on side hit.
-         * This gives clearer wall depth without stripping every column.
+         * Draw darker sky/ceiling above the wall.
+         * This gives the scene a moodier fortress atmosphere.
          */
-        if (side == 0){
-            wall_color = LIGHTGRAY;
-        }
-        else{
-            wall_color = GRAY;
-        }
-
-        /* Draw wall slice */
         DrawRectangle(
             slice_x,
-            wall_top,
+            0,
             slice_width,
-            wall_bottom - wall_top,
-            wall_color
-        );
+            wall_top,
+            (Color){20, 45, 75, 255});
 
-        /*Draw floor below wall slice*/
+        /**
+         * Calculate exact wall hit position.
+         * If we hit an X-side wall, use Y position for texture X.
+         * If we hit a Y-side wall, use X position for texture X.
+         */
+        if (side == 0)
+        {
+            wall_hit = player->y + (perp_wall_dist * ray_dir_y);
+        }
+        else
+        {
+            wall_hit = player->x + (perp_wall_dist * ray_dir_x);
+        }
+
+        /* Keep only the position inside the current tile */
+        wall_hit -= floorf(wall_hit / TILE_SIZE) * TILE_SIZE;
+
+        /**
+         * Convert wall hit position into texture X coordinate.
+         * This maps the horizontal hit position to the texture width.
+         */
+        texture_x = (int)(fmodf(
+                              (wall_hit / TILE_SIZE) * WALL_TEXTURE_REPEAT_X, 1.0f) *
+                          wall_image.width);
+
+        /* Clamp texture X to avoid image range */
+        if (texture_x < 0)
+        {
+            texture_x = 0;
+        }
+        if (texture_x >= wall_image.width)
+        {
+            texture_x = wall_image.width - 1;
+        }
+
+        /* Protection from division by zero */
+        if ((wall_bottom - wall_top) <= 0)
+        {
+            continue;
+        }
+
+        /**
+         * texture_step tells us how much to move in teh texture
+         * for each screen pixel drwan vertically.
+         */
+        texture_step = (float)wall_image.height / (float)(wall_bottom - wall_top);
+
+        /**
+         * Prevent excessive vertical texture stretching when
+         * extremely close to walls.
+         */
+        if (texture_step < 0.25f)
+        {
+            texture_step = 0.25f;
+        }
+
+        /**
+         * Start texture position.
+         * If wall_top is abobe the screen, skip the hidden texture area.
+         */
+        texture_pos = 0.0f;
+        if (wall_top < 0)
+        {
+            texture_pos = -wall_top * texture_step;
+        }
+
+        /* Clamp drawing area to screen */
+        if (wall_top < 0)
+        {
+            wall_top = 0;
+        }
+        if (wall_bottom > SCREEN_HEIGHT)
+        {
+            wall_bottom = SCREEN_HEIGHT;
+        }
+
+        /**
+         * Draw wall column pixel by pixel.
+         * Each screen Y samples the correct texture Y.
+         */
+        for (draw_y = wall_top; draw_y < wall_bottom; draw_y++)
+        {
+            texture_y = (int)texture_pos % wall_image.height;
+
+            tex_color = wall_pixels[(texture_y * wall_image.width) + texture_x];
+
+            /**
+             * Apply simple distance/side shading.
+             * This keeps depth while preserving texture detail.
+             */
+            brightness = 255.0f - (perp_wall_dist * 0.25f);
+
+            if (brightness < 80.0f)
+            {
+                brightness = 80.0f;
+            }
+            if (brightness > 255.0f)
+            {
+                brightness = 255.0f;
+            }
+            if (side == 1)
+            {
+                brightness *= 0.75f;
+            }
+
+            tex_color.r = (unsigned char)((tex_color.r * brightness) / 255.0f);
+            tex_color.g = (unsigned char)((tex_color.g * brightness) / 255.0f);
+            tex_color.b = (unsigned char)((tex_color.b * brightness) / 255.0f);
+
+            DrawLine(slice_x, draw_y, slice_x + slice_width, draw_y, tex_color);
+
+            texture_pos += texture_step;
+        }
+
+        /**
+         * Draw darker ground/floor below the wall.
+         * Brown/earth tone fits the Thimlich Ohinga setting better
+         * than bright green.
+         */
         DrawRectangle(
             slice_x,
             wall_bottom,
             slice_width,
             SCREEN_HEIGHT - wall_bottom,
-            DARKGREEN
-        );
+            (Color){55, 42, 28, 255});
     }
 }
